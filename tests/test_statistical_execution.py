@@ -98,7 +98,7 @@ def test_kaplan_meier_is_monotone_nonincreasing():
         event="event",
     )
     probs = result.estimates["survival_probability"]
-    assert all(a >= b for a, b in zip(probs, probs[1:]))
+    assert all(a >= b for a, b in zip(probs, probs[1:], strict=False))
     assert result.diagnostics["events"] == 5
 
 
