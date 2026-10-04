@@ -304,3 +304,118 @@ class AcademicMedicineDomainPack:
             decision_to_support=decision_to_support,
             population=population,
         )
+
+
+class AcademicMedicineMetricEngine:
+    """Executable metric calculations with explicit denominators and attempt rules."""
+
+    @staticmethod
+    def first_attempt_pass_rate(
+        data: pd.DataFrame,
+        *,
+        learner_id: str,
+        attempt: str,
+        passed: str,
+    ) -> dict[str, Any]:
+        required = [learner_id, attempt, passed]
+        missing = [column for column in required if column not in data.columns]
+        if missing:
+            raise ValueError(f"Missing required columns: {missing}")
+        working = data[required].dropna().copy()
+        working[attempt] = pd.to_numeric(working[attempt], errors="raise").astype(int)
+        working[passed] = pd.to_numeric(working[passed], errors="raise").astype(int)
+        if set(working[passed].unique()) - {0, 1}:
+            raise ValueError("Pass indicator must be coded 0/1.")
+        first = (
+            working.sort_values([learner_id, attempt])
+            .groupby(learner_id, as_index=False)
+            .first()
+        )
+        numerator = int(first[passed].sum())
+        denominator = int(len(first))
+        return {
+            "metric": "first_attempt_pass_rate",
+            "numerator": numerator,
+            "denominator": denominator,
+            "value": numerator / denominator if denominator else None,
+            "attempt_rule": "lowest documented attempt number per learner",
+        }
+
+    @staticmethod
+    def admissions_yield(
+        data: pd.DataFrame,
+        *,
+        applicant_id: str,
+        admitted: str,
+        matriculated: str,
+    ) -> dict[str, Any]:
+        required = [applicant_id, admitted, matriculated]
+        missing = [column for column in required if column not in data.columns]
+        if missing:
+            raise ValueError(f"Missing required columns: {missing}")
+        working = data[required].dropna(subset=[applicant_id]).copy()
+        if working[applicant_id].duplicated().any():
+            raise ValueError("Admissions yield requires one row per applicant.")
+        admitted_values = pd.to_numeric(working[admitted], errors="raise").astype(int)
+        matriculated_values = pd.to_numeric(
+            working[matriculated], errors="raise"
+        ).astype(int)
+        if set(admitted_values.unique()) - {0, 1}:
+            raise ValueError("Admitted indicator must be coded 0/1.")
+        if set(matriculated_values.unique()) - {0, 1}:
+            raise ValueError("Matriculated indicator must be coded 0/1.")
+
+        eligible = working.loc[admitted_values == 1]
+        numerator = int(
+            pd.to_numeric(eligible[matriculated], errors="raise").astype(int).sum()
+        )
+        denominator = int(len(eligible))
+        return {
+            "metric": "admissions_yield",
+            "numerator": numerator,
+            "denominator": denominator,
+            "value": numerator / denominator if denominator else None,
+        }
+
+    @staticmethod
+    def response_rate(
+        *,
+        eligible_count: int,
+        respondent_ids: pd.Series | list[Any],
+    ) -> dict[str, Any]:
+        if eligible_count <= 0:
+            raise ValueError("eligible_count must be positive.")
+        respondents = pd.Series(respondent_ids).dropna().nunique()
+        if respondents > eligible_count:
+            raise ValueError("Unique respondents cannot exceed eligible_count.")
+        return {
+            "metric": "response_rate",
+            "numerator": int(respondents),
+            "denominator": int(eligible_count),
+            "value": float(respondents / eligible_count),
+        }
+
+    @staticmethod
+    def binary_rate(
+        data: pd.DataFrame,
+        *,
+        learner_id: str,
+        indicator: str,
+        metric_name: str,
+    ) -> dict[str, Any]:
+        if learner_id not in data.columns or indicator not in data.columns:
+            raise ValueError("Required learner identifier or indicator is missing.")
+        working = data[[learner_id, indicator]].dropna().copy()
+        if working[learner_id].duplicated().any():
+            raise ValueError(f"{metric_name} requires one row per learner.")
+        values = pd.to_numeric(working[indicator], errors="raise").astype(int)
+        if set(values.unique()) - {0, 1}:
+            raise ValueError("Indicator must be coded 0/1.")
+        numerator = int(values.sum())
+        denominator = int(len(values))
+        return {
+            "metric": metric_name,
+            "numerator": numerator,
+            "denominator": denominator,
+            "value": numerator / denominator if denominator else None,
+        }
