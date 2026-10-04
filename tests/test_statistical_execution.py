@@ -3,6 +3,7 @@ import pandas as pd
 
 from ai_data_science_team.decision_science import (
     AcademicMedicineDomainPack,
+    AcademicMedicineMetricEngine,
     AcademicMedicineSchema,
     AcademicMedicineStudy,
     AnalysisContract,
@@ -184,3 +185,59 @@ def test_academic_medicine_metrics_include_core_definitions():
         "resident_survey_response_rate",
         "in_state_retention",
     }.issubset(names)
+
+
+def test_cox_engine_reports_ph_diagnostics():
+    rng = np.random.default_rng(17)
+    n = 260
+    x = rng.normal(size=n)
+    event_time = rng.exponential(scale=8.0, size=n) / np.exp(0.45 * x)
+    censor_time = rng.exponential(scale=14.0, size=n)
+    observed = np.minimum(event_time, censor_time)
+    event = (event_time <= censor_time).astype(int)
+    result = SurvivalEngine().cox_ph(
+        pd.DataFrame({"time": observed, "event": event, "x": x}),
+        duration="time",
+        event="event",
+        predictors=["x"],
+    )
+    assert "x" in result.estimates["hazard_ratios"]
+    assert result.assumptions_checked["proportional_hazards_checked"] is True
+    assert "x" in result.diagnostics["proportional_hazards_tests"]
+
+
+def test_academic_medicine_metric_engine_uses_first_documented_attempt():
+    data = pd.DataFrame(
+        {
+            "student_id": [1, 1, 2, 2, 3],
+            "attempt": [1, 2, 1, 2, 1],
+            "passed": [0, 1, 1, 1, 1],
+        }
+    )
+    metric = AcademicMedicineMetricEngine.first_attempt_pass_rate(
+        data,
+        learner_id="student_id",
+        attempt="attempt",
+        passed="passed",
+    )
+    assert metric["numerator"] == 2
+    assert metric["denominator"] == 3
+    assert abs(metric["value"] - (2 / 3)) < 1e-12
+
+
+def test_academic_medicine_admissions_yield_has_explicit_denominator():
+    data = pd.DataFrame(
+        {
+            "applicant": [1, 2, 3, 4],
+            "admitted": [1, 1, 0, 1],
+            "matriculated": [1, 0, 0, 1],
+        }
+    )
+    metric = AcademicMedicineMetricEngine.admissions_yield(
+        data,
+        applicant_id="applicant",
+        admitted="admitted",
+        matriculated="matriculated",
+    )
+    assert metric["numerator"] == 2
+    assert metric["denominator"] == 3
