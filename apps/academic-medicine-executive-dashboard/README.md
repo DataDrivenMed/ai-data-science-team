@@ -17,7 +17,9 @@ The dashboard is organized into six surfaces:
 3. **Domain Performance**: focused Admissions, UME, GME, Research, and Workforce scorecards.
 4. **Trends**: longitudinal metric trajectories and target reference lines.
 5. **Evidence**: source inventory, SHA-256 dataset fingerprints, calculations, and evidence records.
-6. **Data & Configuration**: institutional uploads and editable metric registry.
+6. **Leadership Actions**: corrective action register, owners, sponsors, due dates, executive decision log, and post-action outcome verification.
+7. **Accreditation Evidence**: metric-level evidence packet linking definition, trends, provenance, actions, decisions, and closure review.
+8. **Data & Configuration**: institutional uploads and editable metric registry.
 
 ## Data modes
 
@@ -63,3 +65,21 @@ The same specification drives the dashboard, alerts, longitudinal trends, eviden
 - one metric definition across dashboard and executive brief
 - descriptive comparisons are not presented as causal findings
 - data/configuration controls are separated from leadership views
+
+
+## Closed-loop CQI
+
+The dashboard now closes the loop from exception to verified outcome:
+
+```text
+metric threshold breach
+→ corrective action
+→ accountable owner
+→ leadership decision
+→ execution status
+→ remeasurement
+→ verified closure or continued action
+→ accreditation/CQI evidence packet
+```
+
+Action and decision records can be downloaded as JSON. Evidence packets can be downloaded as Markdown or JSON for committee review, accreditation files, or institutional archives.
