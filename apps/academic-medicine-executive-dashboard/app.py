@@ -15,9 +15,12 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from ai_data_science_team.decision_science.domains.academic_medicine import (
+    AccreditationEvidencePackage,
     AcademicMedicineCQIEngine,
+    ActionStatus,
     CQIMetricSpec,
     DatasetRegistry,
+    LeadershipActionRegistry,
     demo_datasets,
     demo_metric_specs,
 )
@@ -164,6 +167,13 @@ registry = build_registry(mode)
 engine = AcademicMedicineCQIEngine(registry=registry)
 specs = current_specs()
 
+action_payload = st.session_state.get("leadership_action_registry")
+action_registry = (
+    LeadershipActionRegistry.from_dict(action_payload)
+    if action_payload
+    else LeadershipActionRegistry()
+)
+
 snapshot_rows = []
 metric_errors = []
 for spec in specs:
@@ -204,6 +214,8 @@ tabs = st.tabs([
     "Domain Performance",
     "Trends",
     "Evidence",
+    "Leadership Actions",
+    "Accreditation Evidence",
     "Data & Configuration",
 ])
 
@@ -285,6 +297,18 @@ with tabs[0]:
         institution_name=institution,
         as_of=datetime.now().date().isoformat(),
     )
+    live_action_summary = action_registry.summary()
+    if live_action_summary["TOTAL"]:
+        brief += (
+            "\n\n## Leadership action status\n"
+            f"- Open: {live_action_summary['OPEN']}\n"
+            f"- In progress: {live_action_summary['IN_PROGRESS']}\n"
+            f"- Blocked: {live_action_summary['BLOCKED']}\n"
+            f"- Complete pending verification: {live_action_summary['COMPLETE']}\n"
+            f"- Verified closed-loop actions: {live_action_summary['VERIFIED']}\n"
+            f"- Decisions logged: {live_action_summary['DECISIONS']}\n"
+            f"- Outcome reviews: {live_action_summary['REVIEWS']}"
+        )
     with st.container(border=True):
         st.markdown(brief)
     st.download_button(
@@ -398,7 +422,331 @@ with tabs[4]:
             mime="application/json",
         )
 
+
 with tabs[5]:
+    st.subheader("Leadership Actions")
+    st.caption(
+        "Close the CQI loop by assigning corrective actions, recording executive decisions, "
+        "and verifying outcomes against the same monitored metric."
+    )
+
+    exceptions = engine.exceptions(view_snapshot)
+    action_summary = action_registry.summary()
+    cols = st.columns(5)
+    with cols[0]:
+        metric_card("Open actions", str(action_summary["OPEN"]), "Awaiting execution")
+    with cols[1]:
+        metric_card("In progress", str(action_summary["IN_PROGRESS"]), "Active corrective work")
+    with cols[2]:
+        metric_card("Blocked", str(action_summary["BLOCKED"]), "Requires escalation")
+    with cols[3]:
+        metric_card("Verified", str(action_summary["VERIFIED"]), "Outcome confirmed")
+    with cols[4]:
+        metric_card("Decisions logged", str(action_summary["DECISIONS"]), "Leadership record")
+
+    left, right = st.columns([1.15, 1])
+    with left:
+        st.markdown("#### Action register")
+        if st.button("Create actions from current exceptions", type="primary"):
+            created = action_registry.create_from_exceptions(exceptions)
+            st.session_state["leadership_action_registry"] = action_registry.to_dict()
+            if created:
+                st.success(f"Created {len(created)} action(s) from current warning/critical metrics.")
+            else:
+                st.info("No new exception actions were needed.")
+            st.rerun()
+
+        action_frame = action_registry.actions_frame()
+        if action_frame.empty:
+            st.info("No leadership actions have been created.")
+        else:
+            show_cols = [
+                "action_id", "metric_name", "domain", "trigger_status", "owner",
+                "status", "action", "success_criterion", "due_date", "review_date",
+            ]
+            st.dataframe(
+                action_frame[show_cols],
+                use_container_width=True,
+                hide_index=True,
+            )
+
+    with right:
+        st.markdown("#### Update action")
+        actions = list(action_registry.actions)
+        if actions:
+            action_map = {
+                f"{item.metric_name} · {item.action_id}": item
+                for item in actions
+            }
+            selected_label = st.selectbox(
+                "Action",
+                list(action_map),
+                key="leadership_action_select",
+            )
+            selected_action = action_map[selected_label]
+            owner = st.text_input(
+                "Owner",
+                value=selected_action.owner,
+                key="action_owner",
+            )
+            sponsor = st.text_input(
+                "Executive sponsor",
+                value=selected_action.executive_sponsor or "",
+                key="action_sponsor",
+            )
+            action_text = st.text_area(
+                "Corrective action",
+                value=selected_action.action,
+                key="action_text",
+            )
+            criterion = st.text_area(
+                "Success criterion",
+                value=selected_action.success_criterion,
+                key="action_criterion",
+            )
+            status = st.selectbox(
+                "Status",
+                [item.value for item in ActionStatus],
+                index=[item.value for item in ActionStatus].index(selected_action.status.value),
+                key="action_status",
+            )
+            due_date = st.text_input(
+                "Due date",
+                value=selected_action.due_date or "",
+                placeholder="YYYY-MM-DD",
+                key="action_due",
+            )
+            review_date = st.text_input(
+                "Review date",
+                value=selected_action.review_date or "",
+                placeholder="YYYY-MM-DD",
+                key="action_review_date",
+            )
+            if st.button("Save action update"):
+                action_registry.update_action(
+                    selected_action.action_id,
+                    status=status,
+                    owner=owner,
+                    action=action_text,
+                    success_criterion=criterion,
+                    due_date=due_date or None,
+                    review_date=review_date or None,
+                    executive_sponsor=sponsor or None,
+                )
+                st.session_state["leadership_action_registry"] = action_registry.to_dict()
+                st.success("Action updated.")
+                st.rerun()
+
+    st.divider()
+    decision_col, review_col = st.columns(2)
+
+    with decision_col:
+        st.markdown("#### Record leadership decision")
+        action_items = list(action_registry.actions)
+        if action_items:
+            decision_action = st.selectbox(
+                "Linked action",
+                action_items,
+                format_func=lambda item: f"{item.metric_name} · {item.action_id}",
+                key="decision_action",
+            )
+            decision = st.text_area(
+                "Decision",
+                placeholder="Example: approve targeted remediation intervention for the next cohort.",
+                key="decision_text",
+            )
+            rationale = st.text_area(
+                "Rationale",
+                placeholder="Record why this option was selected and what evidence was considered.",
+                key="decision_rationale",
+            )
+            decision_maker = st.text_input(
+                "Decision maker",
+                placeholder="Dean / committee / executive owner",
+                key="decision_maker",
+            )
+            options = st.text_area(
+                "Options considered",
+                placeholder="One option per line",
+                key="decision_options",
+            )
+            if st.button("Record decision", key="record_decision"):
+                if decision and rationale and decision_maker:
+                    action_registry.record_decision(
+                        metric_id=decision_action.metric_id,
+                        action_id=decision_action.action_id,
+                        decision=decision,
+                        rationale=rationale,
+                        decision_maker=decision_maker,
+                        options_considered=[
+                            line.strip()
+                            for line in options.splitlines()
+                            if line.strip()
+                        ],
+                        evidence_record_ids=decision_action.evidence_record_ids,
+                    )
+                    st.session_state["leadership_action_registry"] = action_registry.to_dict()
+                    st.success("Leadership decision recorded.")
+                    st.rerun()
+                else:
+                    st.warning("Decision, rationale, and decision maker are required.")
+        else:
+            st.info("Create an action before recording a decision.")
+
+    with review_col:
+        st.markdown("#### Remeasure and verify")
+        action_items = list(action_registry.actions)
+        if action_items:
+            review_action = st.selectbox(
+                "Action to review",
+                action_items,
+                format_func=lambda item: f"{item.metric_name} · {item.action_id}",
+                key="review_action",
+            )
+            current_rows = view_snapshot.loc[
+                view_snapshot["metric_id"] == review_action.metric_id
+            ]
+            if not current_rows.empty:
+                current = current_rows.iloc[-1]
+                st.write(
+                    f"Current metric: **{format_value(current['value'], current['unit'])}** "
+                    f"({current['status']})"
+                )
+                reviewer = st.text_input(
+                    "Reviewer",
+                    placeholder="CQI lead / committee chair",
+                    key="outcome_reviewer",
+                )
+                notes = st.text_area(
+                    "Outcome review notes",
+                    placeholder="Document whether the corrective action changed the outcome and what happens next.",
+                    key="outcome_notes",
+                )
+                if st.button("Verify outcome", key="verify_outcome"):
+                    if reviewer:
+                        evidence_ids = (
+                            [str(current["evidence_record_id"])]
+                            if pd.notna(current.get("evidence_record_id"))
+                            else []
+                        )
+                        review = action_registry.review_outcome(
+                            action_id=review_action.action_id,
+                            measured_value=(
+                                None
+                                if pd.isna(current["value"])
+                                else float(current["value"])
+                            ),
+                            metric_status=str(current["status"]),
+                            reviewer=reviewer,
+                            notes=notes,
+                            evidence_record_ids=evidence_ids,
+                        )
+                        st.session_state["leadership_action_registry"] = action_registry.to_dict()
+                        if review.success_met:
+                            st.success("Success criterion verified. Action moved to VERIFIED.")
+                        else:
+                            st.warning("Outcome not yet verified. Action remains open for continued CQI.")
+                        st.rerun()
+                    else:
+                        st.warning("Reviewer is required.")
+            else:
+                st.warning("The linked metric is not in the current filtered dashboard view.")
+
+    st.markdown("#### Decision log")
+    decisions = action_registry.decisions_frame()
+    if decisions.empty:
+        st.caption("No leadership decisions recorded.")
+    else:
+        st.dataframe(decisions, use_container_width=True, hide_index=True)
+
+    st.markdown("#### Outcome verification log")
+    reviews = action_registry.reviews_frame()
+    if reviews.empty:
+        st.caption("No post-action outcome reviews recorded.")
+    else:
+        st.dataframe(reviews, use_container_width=True, hide_index=True)
+
+    st.download_button(
+        "Download action / decision registry (.json)",
+        data=action_registry.to_json(indent=2).encode("utf-8"),
+        file_name="academic_medicine_cqi_action_registry.json",
+        mime="application/json",
+    )
+
+
+with tabs[6]:
+    st.subheader("Accreditation Evidence")
+    st.caption(
+        "Generate an audit-ready packet linking metric definition, longitudinal performance, "
+        "source lineage, leadership actions, decisions, and outcome verification."
+    )
+
+    if view_snapshot.empty:
+        st.info("No metrics are available.")
+    else:
+        metric_options = {
+            f"{row['name']} · {row['domain']}": str(row["metric_id"])
+            for _, row in view_snapshot.iterrows()
+        }
+        selected_metric_label = st.selectbox(
+            "Metric",
+            list(metric_options),
+            key="evidence_metric",
+        )
+        selected_metric_id = metric_options[selected_metric_label]
+        packet = AccreditationEvidencePackage.build(
+            metric_id=selected_metric_id,
+            snapshot=view_snapshot,
+            trends=view_trends,
+            ledger=engine.ledger,
+            actions=action_registry,
+        )
+        metric = packet["metric"]
+
+        cols = st.columns(4)
+        with cols[0]:
+            metric_card("Current status", str(metric["status"]), str(metric["domain"]))
+        with cols[1]:
+            metric_card(
+                "Current value",
+                format_value(metric["value"], metric["unit"]),
+                "Latest computed result",
+            )
+        with cols[2]:
+            metric_card(
+                "Target",
+                format_value(metric.get("target"), metric["unit"]),
+                "Configured CQI target",
+            )
+        with cols[3]:
+            metric_card(
+                "Evidence records",
+                str(len(packet["evidence_lineage"])),
+                "Linked provenance records",
+            )
+
+        packet_md = AccreditationEvidencePackage.to_markdown(packet)
+        with st.container(border=True):
+            st.markdown(packet_md)
+
+        download_left, download_right = st.columns(2)
+        with download_left:
+            st.download_button(
+                "Download evidence packet (.md)",
+                data=packet_md.encode("utf-8"),
+                file_name=f"{selected_metric_id}_accreditation_evidence.md",
+                mime="text/markdown",
+            )
+        with download_right:
+            packet_json = AccreditationEvidencePackage.to_json(packet, indent=2)
+            st.download_button(
+                "Download evidence packet (.json)",
+                data=packet_json.encode("utf-8"),
+                file_name=f"{selected_metric_id}_accreditation_evidence.json",
+                mime="application/json",
+            )
+
+with tabs[7]:
     st.subheader("Data & Configuration")
     st.caption("Intended for the analytics/CQI team rather than executive viewers.")
     st.markdown("#### Institutional datasets")
