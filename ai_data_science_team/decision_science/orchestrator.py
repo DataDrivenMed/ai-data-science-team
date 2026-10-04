@@ -7,6 +7,7 @@ import pandas as pd
 
 from .contracts import AnalysisContract, MethodRecommendation, ReviewReport
 from .data_quality import assess_data_quality
+from .execution import ExecutionResult, StatisticalExecutionRouter
 from .governance import GovernanceReport, check_governance
 from .methods import recommend_methods
 from .provenance import EvidenceLedger, fingerprint_dataframe
@@ -23,6 +24,7 @@ class DecisionScienceRun:
     review: ReviewReport | None
     red_team: RedTeamReport | None
     evidence: EvidenceLedger
+    execution_result: ExecutionResult | None = None
 
     @property
     def ready_for_analysis(self) -> bool:
@@ -34,15 +36,16 @@ class DecisionScienceRun:
 
 
 class DecisionScienceOrchestrator:
-    """Deterministic control plane around the existing data-science agents.
+    """Decision-grade control plane around statistical and agentic execution."""
 
-    The orchestrator does not replace wrangling, visualization, SQL, or ML
-    agents. It governs when they should run and what evidence must exist before
-    results are trusted.
-    """
-
-    def __init__(self, *, small_cell_threshold: int = 5):
+    def __init__(
+        self,
+        *,
+        small_cell_threshold: int = 5,
+        execution_router: StatisticalExecutionRouter | None = None,
+    ):
         self.small_cell_threshold = small_cell_threshold
+        self.execution_router = execution_router or StatisticalExecutionRouter()
 
     def prepare(
         self,
@@ -86,6 +89,37 @@ class DecisionScienceOrchestrator:
             review=None,
             red_team=None,
             evidence=ledger,
+        )
+
+    def execute(
+        self,
+        run: DecisionScienceRun,
+        data: pd.DataFrame,
+        **kwargs: Any,
+    ) -> DecisionScienceRun:
+        """Execute a supported statistical method family and immediately review it."""
+        if not run.ready_for_analysis:
+            raise RuntimeError(
+                "Analysis is not ready for execution. Resolve contract, quality, or governance blockers first."
+            )
+
+        result = self.execution_router.execute(run.contract, data, **kwargs)
+        run.execution_result = result
+        run.evidence.add(
+            kind="statistical_execution",
+            claim=f"Executed {result.method} on {result.n} complete observations.",
+            source="decision_science statistical execution engine",
+            validation_status="executed",
+            metadata={
+                "method": result.method,
+                "assumptions_checked": result.assumptions_checked,
+                "warnings": result.warnings,
+            },
+        )
+        return self.finalize(
+            run,
+            result.to_dict(),
+            source=f"statistical engine: {result.method}",
         )
 
     def finalize(

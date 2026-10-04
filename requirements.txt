@@ -13,6 +13,7 @@ numpy
 plotly
 streamlit
 scikit-learn
+statsmodels>=0.14
 xgboost
 psutil
 streamlit-flow-component

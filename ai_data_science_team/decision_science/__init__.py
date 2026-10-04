@@ -1,4 +1,4 @@
-"""Decision-grade controls for the AI Data Science Team."""
+"""Decision-grade controls and executable statistical methods."""
 
 from .approvals import ApprovalGate, ApprovalRegistry, ApprovalStatus
 from .benchmarking import BenchmarkCase, BenchmarkResult, BenchmarkSuite
@@ -18,6 +18,22 @@ from .contracts import (
 from .data_quality import assess_data_quality
 from .decision_intelligence import Scenario, rank_scenarios
 from .domain_packs import ACADEMIC_MEDICINE, CLINICAL_RESEARCH, DomainPack
+from .domains import (
+    AcademicMedicineDomainPack,
+    AcademicMedicineMetricEngine,
+    AcademicMedicineSchema,
+    AcademicMedicineStudy,
+    academic_medicine_metrics,
+)
+from .execution import (
+    CausalEngine,
+    ExecutionResult,
+    ForecastEngine,
+    InferentialEngine,
+    LongitudinalEngine,
+    StatisticalExecutionRouter,
+    SurvivalEngine,
+)
 from .governance import GovernanceReport, check_governance
 from .memory import InstitutionalKnowledgeStore, MetricDefinition
 from .methods import recommend_methods
@@ -37,6 +53,10 @@ from .review import review_analysis
 __all__ = [
     "ACADEMIC_MEDICINE",
     "CLINICAL_RESEARCH",
+    "AcademicMedicineDomainPack",
+    "AcademicMedicineMetricEngine",
+    "AcademicMedicineSchema",
+    "AcademicMedicineStudy",
     "AnalysisContract",
     "AnalysisType",
     "ApprovalGate",
@@ -45,6 +65,7 @@ __all__ = [
     "BenchmarkCase",
     "BenchmarkResult",
     "BenchmarkSuite",
+    "CausalEngine",
     "DataQualityReport",
     "DecisionOption",
     "DecisionRecommendation",
@@ -55,8 +76,12 @@ __all__ = [
     "EvidenceRecord",
     "EvidenceStrength",
     "ExecutionEvent",
+    "ExecutionResult",
+    "ForecastEngine",
     "GovernanceReport",
+    "InferentialEngine",
     "InstitutionalKnowledgeStore",
+    "LongitudinalEngine",
     "MethodRecommendation",
     "MetricDefinition",
     "ModelCapability",
@@ -68,8 +93,11 @@ __all__ = [
     "ReviewReport",
     "ReviewStatus",
     "Scenario",
+    "StatisticalExecutionRouter",
+    "SurvivalEngine",
     "TaskProfile",
     "TraceRecorder",
+    "academic_medicine_metrics",
     "assess_data_quality",
     "check_governance",
     "fingerprint_dataframe",
