@@ -218,25 +218,27 @@ explicit time index. Longitudinal models require the grouping unit.
 
 See [Statistical execution engines](docs/EXECUTION_ENGINES.md).
 
-## Academic medicine domain pack
+## Academic medicine domain package
 
-The first deeper domain pack is now implemented for academic medicine. It adds:
+Academic medicine is now a six-subpack package:
 
-- learner/cohort schemas
-- repeated-assessment and attempt validation
-- small-cell checks for program/site reporting
-- reusable contracts for board scores, board pass/fail, admissions yield,
-  resident surveys, retention, and match outcomes
-- executable first-attempt pass rate
-- executable admissions yield
-- survey response rate
-- generic learner-level binary rates
-- standard metric-definition templates
+- **Admissions:** applicant funnel, yield, MCAT/GPA profile, scholarship strategy,
+  and demographic/fairness screening
+- **UME:** USMLE, NBME, course performance, clerkships, remediation, progression
+- **GME:** resident surveys, program outcomes, attrition, board outcomes, site
+  analysis, workforce
+- **Accreditation/CQI:** LCME and ACGME metric specifications, monitoring
+  thresholds, alerts, and evidence lineage
+- **Research:** NIH funding, publications, grants, clinical trials, research growth
+- **Workforce:** retention, specialty, geography, underserved practice, pipeline
 
-The pack is intentionally configurable. It does not hard-code one school's
-definition of match success, retention, cohort eligibility, or learner risk.
+The original generic academic-medicine APIs remain backward compatible.
 
-See [Academic medicine domain pack](docs/ACADEMIC_MEDICINE.md).
+Each subpack keeps consequential definitions configurable. For example, the code
+does not invent an institution's definition of match success, retention,
+underserved practice, accreditation threshold, or demographic fairness.
+
+See [Academic medicine domain package](docs/ACADEMIC_MEDICINE.md).
 
 ## Independent reviewer
 
@@ -411,9 +413,8 @@ advertise an analytical safeguard that the code does not actually enforce.
 
 ## Recommended next phases
 
-1. Expand academic medicine into UME, admissions, GME, accreditation/CQI, and
-   workforce subpacks with local metric dictionaries.
-2. Build the next deep domain pack for clinical research.
+1. Build the next deep domain package for clinical research.
+2. Add configurable local metric dictionaries and policy files for each academic-medicine subpack.
 3. Add doubly robust cross-fitting and formal unmeasured-confounding sensitivity methods.
 4. Add competing-risks and time-varying survival methods.
 5. Add typed result adapters from existing LLM agents into the statistical reviewer.
