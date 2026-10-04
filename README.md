@@ -65,7 +65,10 @@ question
   -> evidence ledger
   -> reproducibility package
   -> decision report
-  -> monitoring
+  -> CQI monitoring
+  -> leadership action
+  -> remeasurement
+  -> verified closure
 ```
 
 The design goal is to make analytical failure visible rather than hide it behind
@@ -264,6 +267,10 @@ as the underlying Python package. It provides:
 - institutional CSV/XLSX upload
 - editable CQI metric registry
 - downloadable Dean/leadership brief generated from the same metric results
+- corrective-action register with accountable owners and executive sponsors
+- leadership decision log with rationale and options considered
+- post-action remeasurement and verified closure
+- downloadable accreditation/CQI evidence packets
 
 A built-in synthetic demonstration mode allows the complete UI to run before
 institutional datasets are connected.
