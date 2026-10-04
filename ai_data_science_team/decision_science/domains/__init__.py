@@ -1,17 +1,41 @@
 """Domain-specific analytical packs."""
 
 from .academic_medicine import (
+    AccreditationMetricSpec,
+    AccreditationPack,
     AcademicMedicineDomainPack,
     AcademicMedicineMetricEngine,
     AcademicMedicineSchema,
     AcademicMedicineStudy,
+    AdmissionsPack,
+    AdmissionsSchema,
+    GMEPack,
+    GMESchema,
+    ResearchPack,
+    ResearchSchema,
+    UMEPack,
+    UMESchema,
+    WorkforcePack,
+    WorkforceSchema,
     academic_medicine_metrics,
 )
 
 __all__ = [
+    "AccreditationMetricSpec",
+    "AccreditationPack",
     "AcademicMedicineDomainPack",
     "AcademicMedicineMetricEngine",
     "AcademicMedicineSchema",
     "AcademicMedicineStudy",
+    "AdmissionsPack",
+    "AdmissionsSchema",
+    "GMEPack",
+    "GMESchema",
+    "ResearchPack",
+    "ResearchSchema",
+    "UMEPack",
+    "UMESchema",
+    "WorkforcePack",
+    "WorkforceSchema",
     "academic_medicine_metrics",
 ]
