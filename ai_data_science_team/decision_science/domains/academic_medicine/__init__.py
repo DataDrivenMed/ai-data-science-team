@@ -10,6 +10,7 @@ from .core import (
     academic_medicine_metrics,
 )
 from .demo import demo_datasets, demo_metric_specs
+from .evidence_package import AccreditationEvidencePackage
 from .executive import (
     AcademicMedicineCQIEngine,
     CQIMetricSpec,
@@ -17,7 +18,6 @@ from .executive import (
     MetricResult,
     RegisteredDataset,
 )
-from .evidence_package import AccreditationEvidencePackage
 from .gme import GMEPack, GMESchema
 from .leadership import (
     ActionStatus,
