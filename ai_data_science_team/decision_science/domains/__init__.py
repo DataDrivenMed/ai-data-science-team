@@ -2,6 +2,7 @@
 
 from .academic_medicine import (
     AcademicMedicineDomainPack,
+    AcademicMedicineMetricEngine,
     AcademicMedicineSchema,
     AcademicMedicineStudy,
     academic_medicine_metrics,
@@ -9,6 +10,7 @@ from .academic_medicine import (
 
 __all__ = [
     "AcademicMedicineDomainPack",
+    "AcademicMedicineMetricEngine",
     "AcademicMedicineSchema",
     "AcademicMedicineStudy",
     "academic_medicine_metrics",
