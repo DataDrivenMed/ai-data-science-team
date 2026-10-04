@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from scipy.stats import pearsonr
 from statsmodels.duration.hazard_regression import PHReg
 from statsmodels.duration.survfunc import SurvfuncRight
 
@@ -62,6 +63,7 @@ class SurvivalEngine:
         event: str,
         predictors: list[str],
         ties: str = "breslow",
+        ph_alpha: float = 0.05,
     ) -> ExecutionResult:
         require_columns(data, [duration, event, *predictors])
         working = data[[duration, event, *predictors]].dropna().copy()
@@ -95,6 +97,31 @@ class SurvivalEngine:
                 "ci_high": float(np.exp(ci[index, 1])),
             }
 
+        schoenfeld = np.asarray(fitted.schoenfeld_residuals, dtype=float)
+        event_mask = status.to_numpy(dtype=bool)
+        log_event_time = np.log(np.maximum(times.to_numpy()[event_mask], 1e-12))
+        ph_tests: dict[str, dict[str, float | None]] = {}
+        ph_pass = True
+        for index, name in enumerate(x.columns):
+            residual = schoenfeld[event_mask, index]
+            valid = np.isfinite(residual) & np.isfinite(log_event_time)
+            if valid.sum() < 5 or np.nanstd(residual[valid]) == 0:
+                ph_tests[str(name)] = {"correlation": None, "p_value": None}
+                continue
+            correlation, p_value = pearsonr(log_event_time[valid], residual[valid])
+            ph_tests[str(name)] = {
+                "correlation": float(correlation),
+                "p_value": float(p_value),
+            }
+            if p_value < ph_alpha:
+                ph_pass = False
+
+        warnings: list[str] = []
+        if not ph_pass:
+            warnings.append(
+                "Schoenfeld-residual screening suggests non-proportional hazards for at least one covariate."
+            )
+
         return ExecutionResult(
             method="cox_proportional_hazards",
             n=len(working),
@@ -103,14 +130,15 @@ class SurvivalEngine:
                 "events": int(status.sum()),
                 "censored": int((1 - status).sum()),
                 "log_likelihood": float(fitted.llf),
+                "proportional_hazards_tests": ph_tests,
+                "proportional_hazards_alpha": ph_alpha,
             },
             assumptions_checked={
                 "nonnegative_duration_verified": True,
                 "binary_event_verified": True,
-                "proportional_hazards_checked": None,
+                "proportional_hazards_checked": True,
+                "proportional_hazards_screen_passed": ph_pass,
             },
-            warnings=[
-                "Proportional-hazards diagnostics require substantive follow-up; this engine does not auto-certify the PH assumption."
-            ],
+            warnings=warnings,
             metadata={"ties": ties},
         )
