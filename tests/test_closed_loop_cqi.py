@@ -1,9 +1,7 @@
-import pandas as pd
-
 from ai_data_science_team import (
+    AcademicMedicineCQIEngine,
     AccreditationEvidencePackage,
     ActionStatus,
-    AcademicMedicineCQIEngine,
     DatasetRegistry,
     LeadershipActionRegistry,
     demo_datasets,
