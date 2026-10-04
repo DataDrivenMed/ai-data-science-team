@@ -20,6 +20,7 @@ from .decision_intelligence import Scenario, rank_scenarios
 from .domain_packs import ACADEMIC_MEDICINE, CLINICAL_RESEARCH, DomainPack
 from .domains import (
     AcademicMedicineDomainPack,
+    AcademicMedicineMetricEngine,
     AcademicMedicineSchema,
     AcademicMedicineStudy,
     academic_medicine_metrics,
@@ -53,6 +54,7 @@ __all__ = [
     "ACADEMIC_MEDICINE",
     "CLINICAL_RESEARCH",
     "AcademicMedicineDomainPack",
+    "AcademicMedicineMetricEngine",
     "AcademicMedicineSchema",
     "AcademicMedicineStudy",
     "AnalysisContract",
