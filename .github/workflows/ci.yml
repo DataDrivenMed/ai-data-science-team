@@ -26,6 +26,6 @@ jobs:
       - name: Compile
         run: python -m compileall -q ai_data_science_team
       - name: Decision-science tests
-        run: pytest tests/test_decision_science.py
+        run: pytest tests
       - name: Lint decision-science core
-        run: ruff check ai_data_science_team/decision_science tests/test_decision_science.py
+        run: ruff check ai_data_science_team/decision_science tests
