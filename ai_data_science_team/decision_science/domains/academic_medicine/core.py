@@ -6,8 +6,8 @@ from typing import Any
 
 import pandas as pd
 
-from ..contracts import AnalysisContract, AnalysisType
-from ..memory import MetricDefinition
+from ...contracts import AnalysisContract, AnalysisType
+from ...memory import MetricDefinition
 
 
 class AcademicMedicineStudy(str, Enum):
