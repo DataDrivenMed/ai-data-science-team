@@ -219,6 +219,15 @@ def review_analysis(
                         "Run proportional-hazards diagnostics before relying on Cox estimates.",
                     )
                 )
+            elif assumptions.get("proportional_hazards_screen_passed") is False:
+                findings.append(
+                    ReviewFinding(
+                        "ph_assumption_concern",
+                        "warning",
+                        "Schoenfeld-residual screening suggests non-proportional hazards.",
+                        "Consider time-varying effects, stratification, or an alternative model.",
+                    )
+                )
 
     if contract.analysis_type == AnalysisType.LONGITUDINAL:
         if assumptions.get("clustering_modeled") is not True:
