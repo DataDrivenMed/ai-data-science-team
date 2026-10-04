@@ -181,8 +181,62 @@ cleaning step can erase evidence that the source system is producing bad data.
 | Survival | Time-to-event methods |
 | Longitudinal | Mixed-effects and clustered methods |
 
-The router does not claim to automatically fit every method listed. It provides
-the analytical plan and safeguards that execution agents should follow.
+The router is now connected to executable statistical engines for inferential,
+causal, forecasting, survival, and longitudinal analyses. Method-specific
+variables with consequential meaning, such as a causal treatment/confounder set
+or survival event definition, must still be supplied explicitly.
+
+
+## Statistical execution engines
+
+The fork now executes the major non-AutoML method families directly:
+
+- **Inferential:** OLS, logistic regression, Poisson regression
+- **Causal:** IPW and augmented IPW for binary treatments
+- **Forecasting:** ARIMA with chronological holdout evaluation and naive baseline
+- **Survival:** Kaplan-Meier and Cox proportional hazards
+- **Longitudinal:** mixed-effects models and GEE
+
+Execution outputs are typed, include diagnostics and uncertainty, enter the
+evidence ledger, and are automatically passed through independent review.
+
+Example:
+
+```python
+run = orchestrator.prepare(contract, df)
+
+if run.ready_for_analysis:
+    run = orchestrator.execute(run, df)
+
+print(run.execution_result.to_dict())
+print(run.review.to_dict())
+```
+
+Causal execution requires the treatment and confounder set explicitly. Survival
+execution requires explicit duration/event columns. Forecasting requires an
+explicit time index. Longitudinal models require the grouping unit.
+
+See [Statistical execution engines](docs/EXECUTION_ENGINES.md).
+
+## Academic medicine domain pack
+
+The first deeper domain pack is now implemented for academic medicine. It adds:
+
+- learner/cohort schemas
+- repeated-assessment and attempt validation
+- small-cell checks for program/site reporting
+- reusable contracts for board scores, board pass/fail, admissions yield,
+  resident surveys, retention, and match outcomes
+- executable first-attempt pass rate
+- executable admissions yield
+- survey response rate
+- generic learner-level binary rates
+- standard metric-definition templates
+
+The pack is intentionally configurable. It does not hard-code one school's
+definition of match success, retention, cohort eligibility, or learner risk.
+
+See [Academic medicine domain pack](docs/ACADEMIC_MEDICINE.md).
 
 ## Independent reviewer
 
@@ -340,40 +394,40 @@ GitHub Actions runs the decision-science checks on Python 3.10, 3.11, and 3.12.
 
 ## Current implementation boundary
 
-This release establishes the control plane and deterministic quality/review
-foundation. It does **not** yet claim full automated implementation of:
+The control plane now includes working inferential, causal, forecasting,
+survival, and longitudinal execution engines plus the academic medicine domain
+pack. Important boundaries remain:
 
-- causal estimators
-- survival models
-- mixed-effects models
-- automated DAG construction
-- organization-specific policy engines
-- persistent institutional memory
-- automated model-provider routing
-- full observability and cost tracing
+- causal adjustment sets are not inferred automatically
+- unmeasured-confounding sensitivity methods are not yet automated
+- competing-risk and advanced time-varying survival models are not yet included
+- multivariate/more complex random-effects structures still require explicit specification
+- automated DAG construction is not included
+- institution-specific policy engines still require local configuration
+- observability records execution metadata but does not yet provide a full hosted tracing backend
 
-Those are logical next modules. Keeping this boundary explicit is important:
-the repository should never advertise an analytical safeguard that the code does
-not actually enforce.
+Keeping these boundaries explicit is intentional. The repository should never
+advertise an analytical safeguard that the code does not actually enforce.
 
 ## Recommended next phases
 
-1. Add domain packs for academic medicine, clinical research, admissions, GME,
-   finance, and operations.
-2. Add typed result adapters from existing agents into the reviewer.
-3. Add causal, survival, and longitudinal execution modules.
-4. Add persistent metric dictionaries and institutional knowledge.
-5. Add prompt/model evaluation benchmarks and regression suites.
-6. Add observability for latency, tokens, cost, retries, tool failures, and
-   validation outcomes.
+1. Expand academic medicine into UME, admissions, GME, accreditation/CQI, and
+   workforce subpacks with local metric dictionaries.
+2. Build the next deep domain pack for clinical research.
+3. Add doubly robust cross-fitting and formal unmeasured-confounding sensitivity methods.
+4. Add competing-risks and time-varying survival methods.
+5. Add typed result adapters from existing LLM agents into the statistical reviewer.
+6. Add prompt/model evaluation benchmarks and regression suites.
 7. Add human approval checkpoints to the Pipeline Studio interface.
-8. Add decision reports with scenario comparison and post-decision monitoring.
+8. Add a hosted observability layer and post-decision monitoring workflows.
 
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Governance](docs/GOVERNANCE.md)
 - [Migration guide](docs/MIGRATION.md)
+- [Statistical execution engines](docs/EXECUTION_ENGINES.md)
+- [Academic medicine domain pack](docs/ACADEMIC_MEDICINE.md)
 
 ## Attribution
 
