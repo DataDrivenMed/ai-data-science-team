@@ -231,6 +231,8 @@ Academic medicine is now a six-subpack package:
   thresholds, alerts, and evidence lineage
 - **Research:** NIH funding, publications, grants, clinical trials, research growth
 - **Workforce:** retention, specialty, geography, underserved practice, pipeline
+- **Executive/CQI:** unified metric registry, trend computation, threshold
+  exceptions, evidence lineage, and leadership briefing
 
 The original generic academic-medicine APIs remain backward compatible.
 
@@ -239,6 +241,34 @@ does not invent an institution's definition of match success, retention,
 underserved practice, accreditation threshold, or demographic fairness.
 
 See [Academic medicine domain package](docs/ACADEMIC_MEDICINE.md).
+
+## Academic Medicine Executive Dashboard
+
+The repository now includes a leadership-facing CQI and decision-intelligence
+application:
+
+```bash
+streamlit run apps/academic-medicine-executive-dashboard/app.py
+```
+
+The dashboard uses the same academic-medicine metric definitions and calculators
+as the underlying Python package. It provides:
+
+- executive KPI portfolio status
+- warning/critical exception management
+- Admissions, UME, GME, Research, and Workforce domain views
+- longitudinal trends
+- configurable targets and thresholds
+- dataset inventory and SHA-256 fingerprints
+- claim/evidence lineage
+- institutional CSV/XLSX upload
+- editable CQI metric registry
+- downloadable Dean/leadership brief generated from the same metric results
+
+A built-in synthetic demonstration mode allows the complete UI to run before
+institutional datasets are connected.
+
+See [Academic Medicine Executive Dashboard](apps/academic-medicine-executive-dashboard/README.md).
 
 ## Independent reviewer
 

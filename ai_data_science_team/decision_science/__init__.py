@@ -19,6 +19,7 @@ from .data_quality import assess_data_quality
 from .decision_intelligence import Scenario, rank_scenarios
 from .domain_packs import ACADEMIC_MEDICINE, CLINICAL_RESEARCH, DomainPack
 from .domains import (
+    AcademicMedicineCQIEngine,
     AcademicMedicineDomainPack,
     AcademicMedicineMetricEngine,
     AcademicMedicineSchema,
@@ -27,8 +28,12 @@ from .domains import (
     AccreditationPack,
     AdmissionsPack,
     AdmissionsSchema,
+    CQIMetricSpec,
+    DatasetRegistry,
     GMEPack,
     GMESchema,
+    MetricResult,
+    RegisteredDataset,
     ResearchPack,
     ResearchSchema,
     UMEPack,
@@ -36,6 +41,8 @@ from .domains import (
     WorkforcePack,
     WorkforceSchema,
     academic_medicine_metrics,
+    demo_datasets,
+    demo_metric_specs,
 )
 from .execution import (
     CausalEngine,
@@ -65,6 +72,7 @@ from .review import review_analysis
 __all__ = [
     "ACADEMIC_MEDICINE",
     "CLINICAL_RESEARCH",
+    "AcademicMedicineCQIEngine",
     "AcademicMedicineDomainPack",
     "AcademicMedicineMetricEngine",
     "AcademicMedicineSchema",
@@ -73,8 +81,12 @@ __all__ = [
     "AccreditationPack",
     "AdmissionsPack",
     "AdmissionsSchema",
+    "CQIMetricSpec",
+    "DatasetRegistry",
     "GMEPack",
     "GMESchema",
+    "MetricResult",
+    "RegisteredDataset",
     "ResearchPack",
     "ResearchSchema",
     "UMEPack",
@@ -122,6 +134,8 @@ __all__ = [
     "TaskProfile",
     "TraceRecorder",
     "academic_medicine_metrics",
+    "demo_datasets",
+    "demo_metric_specs",
     "assess_data_quality",
     "check_governance",
     "fingerprint_dataframe",

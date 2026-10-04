@@ -23,3 +23,12 @@ This application allows you to connect to a SQL database and generate SQL querie
 
 ![SQL Database App](../img/apps/ai_sql_database_app.jpg)
 
+
+
+## Academic Medicine Executive Dashboard
+
+A leadership-facing dashboard and CQI cockpit across Admissions, UME, GME, Research, Workforce, and accreditation evidence. It computes metrics from registered institutional datasets, applies configured thresholds, generates longitudinal trends, preserves evidence lineage, and creates a Dean/leadership briefing from the same metric registry.
+
+```bash
+streamlit run apps/academic-medicine-executive-dashboard/app.py
+```

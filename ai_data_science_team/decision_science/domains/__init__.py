@@ -1,6 +1,7 @@
 """Domain-specific analytical packs."""
 
 from .academic_medicine import (
+    AcademicMedicineCQIEngine,
     AcademicMedicineDomainPack,
     AcademicMedicineMetricEngine,
     AcademicMedicineSchema,
@@ -9,8 +10,12 @@ from .academic_medicine import (
     AccreditationPack,
     AdmissionsPack,
     AdmissionsSchema,
+    CQIMetricSpec,
+    DatasetRegistry,
     GMEPack,
     GMESchema,
+    MetricResult,
+    RegisteredDataset,
     ResearchPack,
     ResearchSchema,
     UMEPack,
@@ -18,19 +23,26 @@ from .academic_medicine import (
     WorkforcePack,
     WorkforceSchema,
     academic_medicine_metrics,
+    demo_datasets,
+    demo_metric_specs,
 )
 
 __all__ = [
-    "AccreditationMetricSpec",
-    "AccreditationPack",
+    "AcademicMedicineCQIEngine",
     "AcademicMedicineDomainPack",
     "AcademicMedicineMetricEngine",
     "AcademicMedicineSchema",
     "AcademicMedicineStudy",
+    "AccreditationMetricSpec",
+    "AccreditationPack",
     "AdmissionsPack",
     "AdmissionsSchema",
+    "CQIMetricSpec",
+    "DatasetRegistry",
     "GMEPack",
     "GMESchema",
+    "MetricResult",
+    "RegisteredDataset",
     "ResearchPack",
     "ResearchSchema",
     "UMEPack",
@@ -38,4 +50,6 @@ __all__ = [
     "WorkforcePack",
     "WorkforceSchema",
     "academic_medicine_metrics",
+    "demo_datasets",
+    "demo_metric_specs",
 ]
