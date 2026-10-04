@@ -159,3 +159,32 @@ institutional policy, appropriate governance, and human review.
 
 Descriptive demographic differences are screening signals. They are not, by
 themselves, evidence of bias, discrimination, or causal mechanisms.
+
+
+## Closed-loop CQI and leadership action
+
+The academic medicine package now includes:
+
+- `LeadershipActionRegistry`
+- `LeadershipAction`
+- `DecisionRecord`
+- `OutcomeReview`
+- `AccreditationEvidencePackage`
+
+A warning or critical metric can be converted into an owned corrective action. The action records the trigger, owner, rationale, success criterion, due/review dates, target value, executive sponsor, status, and linked evidence.
+
+Leadership decisions can be recorded with decision maker, rationale, options considered, and evidence references.
+
+After intervention, the same metric is remeasured. The outcome review determines whether the configured success criterion has been met. Successful remeasurement moves the action to `VERIFIED`; unsuccessful remeasurement keeps the CQI cycle open.
+
+The evidence packager combines:
+
+- current metric definition and result
+- target/warning/critical thresholds
+- longitudinal performance
+- dataset fingerprint and evidence lineage
+- corrective actions
+- leadership decision log
+- outcome verification
+
+This creates a single traceable record from institutional data to CQI closure.
