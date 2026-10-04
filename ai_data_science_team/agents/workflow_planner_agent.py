@@ -1,11 +1,13 @@
 # BUSINESS SCIENCE UNIVERSITY
 # AI DATA SCIENCE TEAM
 # ***
-# * Agents: Workflow Planner Agent
+# Workflow Planner Agent
 
 from __future__ import annotations
 
-from typing import Any, Optional, Sequence, Dict
+import json
+import re
+from typing import Any, Dict, Optional, Sequence
 
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
@@ -16,46 +18,94 @@ from ai_data_science_team.utils.messages import get_last_user_message_content
 
 AGENT_NAME = "workflow_planner_agent"
 
+EXECUTION_STEPS = {
+    "frame",
+    "list_files",
+    "load",
+    "merge",
+    "sql",
+    "quality_gate",
+    "governance_check",
+    "wrangle",
+    "clean",
+    "eda",
+    "viz",
+    "feature",
+    "method_select",
+    "model",
+    "evaluate",
+    "review",
+    "red_team",
+    "evidence",
+    "reproducibility",
+    "mlflow_log",
+    "mlflow_tools",
+    "decision_report",
+}
+
+STEP_ORDER = [
+    "frame",
+    "list_files",
+    "load",
+    "merge",
+    "sql",
+    "quality_gate",
+    "governance_check",
+    "wrangle",
+    "clean",
+    "eda",
+    "viz",
+    "feature",
+    "method_select",
+    "model",
+    "evaluate",
+    "review",
+    "red_team",
+    "evidence",
+    "reproducibility",
+    "mlflow_log",
+    "mlflow_tools",
+    "decision_report",
+]
+
 
 def _safe_json_loads(text: str) -> dict:
-    import json
-    import re
-
     if not text:
         return {}
     try:
-        return json.loads(text)
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, dict) else {"steps": parsed}
     except Exception:
         pass
-    # Try to extract the first JSON object or array from the text.
-    m = re.search(r"(\{.*\}|\[.*\])", text, flags=re.DOTALL)
-    if not m:
+
+    match = re.search(r"(\{.*\}|\[.*\])", text, flags=re.DOTALL)
+    if not match:
         return {}
-    candidate = m.group(1)
     try:
-        parsed = json.loads(candidate)
-        if isinstance(parsed, dict):
-            return parsed
-        return {"steps": parsed}
+        parsed = json.loads(match.group(1))
+        return parsed if isinstance(parsed, dict) else {"steps": parsed}
     except Exception:
         return {}
+
+
+def _normalize_steps(values: Any) -> list[str]:
+    if isinstance(values, str):
+        values = [values]
+    if not isinstance(values, list):
+        return []
+    requested = {str(value).strip() for value in values}
+    return [step for step in STEP_ORDER if step in requested]
 
 
 class WorkflowPlannerAgent(BaseAgent):
-    """
-    Produces a structured, ordered workflow plan for the supervisor-led DS team.
-
-    This agent does not execute data tasks; it only returns a plan + any questions
-    needed to proceed (e.g., missing file path or target column).
-    """
+    """Plan either a legacy task workflow or a decision-grade analytical workflow."""
 
     def __init__(self, model: Any, log: bool = False):
         self._params = {"model": model, "log": log}
         self.response: Optional[dict] = None
 
     def update_params(self, **kwargs):
-        for k, v in kwargs.items():
-            self._params[k] = v
+        self._params.update(kwargs)
 
     def invoke_messages(
         self,
@@ -70,121 +120,114 @@ class WorkflowPlannerAgent(BaseAgent):
             user_instructions = get_last_user_message_content(messages)
         context = context or {}
         proactive_mode = bool(context.get("proactive_workflow_mode"))
+        decision_grade = bool(context.get("decision_grade_mode"))
 
         system = (
-            "You are a workflow planning agent for a supervisor-led data science team.\n"
+            "You are the workflow planner for an AI data-science team. "
             "Return ONLY valid JSON.\n\n"
-            "You can plan ONLY these executable steps (in order):\n"
-            "- list_files (list files in a directory; do not load file contents)\n"
-            "- load (load file from disk)\n"
-            "- merge (merge/join/concat multiple datasets)\n"
-            "- sql (run a SQL query)\n"
-            "- wrangle (reshape/transform)\n"
-            "- clean (impute/fix types/outliers)\n"
-            "- eda (describe/missingness/correlation/reports)\n"
-            "- viz (plotly chart)\n"
-            "- feature (feature engineering)\n"
-            "- model (H2O AutoML training)\n"
-            "- evaluate (holdout evaluation: metrics + plots)\n"
-            "- mlflow_log (log workflow artifacts: metrics/tables/figures to MLflow)\n"
-            "- mlflow_tools (inspect MLflow: list/search runs/artifacts, launch UI)\n\n"
+            "Available ordered steps:\n"
+            "frame: define question, decision, population, outcome and risks\n"
+            "list_files: inspect available files without loading contents\n"
+            "load: load data\n"
+            "merge: merge/join/concat datasets\n"
+            "sql: query a database\n"
+            "quality_gate: measure completeness, integrity and blocking defects\n"
+            "governance_check: check sensitive fields and disclosure risks\n"
+            "wrangle: reshape/transform data\n"
+            "clean: impute/fix types/outliers after quality assessment\n"
+            "eda: descriptive analysis\n"
+            "viz: visualization\n"
+            "feature: feature engineering\n"
+            "method_select: select inferential/predictive/causal/forecast method family\n"
+            "model: train a predictive ML model\n"
+            "evaluate: out-of-sample model evaluation\n"
+            "review: independent analytical review\n"
+            "red_team: search for competing explanations and failure modes\n"
+            "evidence: record provenance and claim lineage\n"
+            "reproducibility: create a reproducibility package\n"
+            "mlflow_log: log workflow artifacts\n"
+            "mlflow_tools: inspect MLflow\n"
+            "decision_report: convert validated results into decision options and monitoring\n\n"
+            "Schema: {\"steps\": [...], \"target_variable\": str|null, "
+            "\"analysis_type\": str|null, \"questions\": [...], \"notes\": [...]}.\n"
             "Rules:\n"
-            "- Output schema: {\"steps\": [..], \"target_variable\": str|null, \"questions\": [..], \"notes\": [..]}.\n"
-            "- steps must be a de-duplicated ordered list of step IDs from the allowed set.\n"
-            "- The word \"model\" can be ambiguous (e.g., a product \"bike model\" vs an ML model). "
-            "Only include the ML step `model` when the user explicitly asks to train/build/predict with an ML model.\n"
-            "- If required info is missing (e.g., file path for load, target column for model), "
-            "put a short question in questions and omit dependent steps.\n"
-            "- If you include 'model' or 'evaluate', you MUST set target_variable or ask for it and omit those steps.\n"
-            "- Prefer a minimal plan that satisfies the user request.\n"
-            "- If proactive_workflow_mode is OFF, include ONLY the steps explicitly requested (plus prerequisites).\n"
-            "- If proactive_workflow_mode is ON, you MAY propose a reasonable end-to-end workflow for broad requests "
-            "(e.g., \"analyze\", \"explore\", \"full workflow\"), but keep narrow requests narrow.\n"
+            "- Keep narrow requests narrow.\n"
+            "- Do not treat the noun 'model' (for example a product model) as an ML request.\n"
+            "- ML model/evaluate requires a target variable.\n"
+            "- Never clean before quality_gate in decision-grade mode.\n"
+            "- Causal claims require frame, quality_gate, method_select, review and red_team.\n"
+            "- Predictive workflows require evaluate and review.\n"
+            "- If decision_grade_mode is on, broad analytical requests should normally include "
+            "frame, quality_gate, governance_check, method_select, review, evidence, "
+            "reproducibility and decision_report.\n"
             f"- proactive_workflow_mode={'ON' if proactive_mode else 'OFF'}.\n"
+            f"- decision_grade_mode={'ON' if decision_grade else 'OFF'}.\n"
         )
 
         human = (
             "User request:\n{user_instructions}\n\n"
-            "Current context (may be incomplete):\n{context_json}\n\n"
+            "Current context:\n{context_json}\n\n"
             "Return JSON only."
         )
-
-        prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
-        import json
-
-        resp = (prompt | llm).invoke(
+        prompt = ChatPromptTemplate.from_messages(
+            [("system", system), ("human", human)]
+        )
+        response = (prompt | llm).invoke(
             {
                 "user_instructions": user_instructions or "",
                 "context_json": json.dumps(context, default=str),
             }
         )
-        content = getattr(resp, "content", "") or str(resp)
-        plan = _safe_json_loads(content)
+        plan = _safe_json_loads(
+            getattr(response, "content", "") or str(response)
+        )
 
-        # Normalize minimal shape
-        steps = plan.get("steps") if isinstance(plan, dict) else None
-        if isinstance(steps, str):
-            steps = [steps]
-        if not isinstance(steps, list):
-            steps = []
-        steps = [str(s).strip() for s in steps if str(s).strip()]
+        steps = _normalize_steps(plan.get("steps"))
+        target = plan.get("target_variable")
+        target = str(target).strip() if target is not None else None
+        analysis_type = plan.get("analysis_type")
+        analysis_type = (
+            str(analysis_type).strip().lower()
+            if analysis_type is not None
+            else None
+        )
 
-        allowed = {
-            "list_files",
-            "load",
-            "merge",
-            "sql",
-            "wrangle",
-            "clean",
-            "eda",
-            "viz",
-            "feature",
-            "model",
-            "evaluate",
-            "mlflow_log",
-            "mlflow_tools",
-        }
-        deduped: list[str] = []
-        seen: set[str] = set()
-        for s in steps:
-            if s in allowed and s not in seen:
-                deduped.append(s)
-                seen.add(s)
-
-        questions = plan.get("questions") if isinstance(plan, dict) else None
+        questions = plan.get("questions", [])
         if isinstance(questions, str):
             questions = [questions]
-        if not isinstance(questions, list):
-            questions = []
         questions = [str(q).strip() for q in questions if str(q).strip()]
 
-        notes = plan.get("notes") if isinstance(plan, dict) else None
+        notes = plan.get("notes", [])
         if isinstance(notes, str):
             notes = [notes]
-        if not isinstance(notes, list):
-            notes = []
         notes = [str(n).strip() for n in notes if str(n).strip()]
 
-        target_variable = plan.get("target_variable") if isinstance(plan, dict) else None
-        if target_variable is not None:
-            target_variable = str(target_variable).strip() or None
-
-        # Enforce that model/evaluate require a target variable.
-        if any(s in deduped for s in ("model", "evaluate")) and not target_variable:
-            # Remove dependent steps and ask for target.
-            deduped = [s for s in deduped if s not in ("model", "evaluate")]
+        if any(step in steps for step in ("model", "evaluate")) and not target:
+            steps = [s for s in steps if s not in {"model", "evaluate"}]
             questions.insert(
                 0,
-                "What is the target column name for modeling/evaluation (e.g., `Churn`)?",
+                "What is the target column name for modeling/evaluation?",
             )
 
+        if decision_grade:
+            requested = set(steps)
+            if "clean" in requested and "quality_gate" not in requested:
+                requested.add("quality_gate")
+            if analysis_type == "causal":
+                requested.update(
+                    {"frame", "quality_gate", "method_select", "review", "red_team"}
+                )
+            if "model" in requested:
+                requested.update({"evaluate", "review"})
+            steps = [step for step in STEP_ORDER if step in requested]
+
         self.response = {
-            "steps": deduped,
-            "target_variable": target_variable,
+            "steps": steps,
+            "target_variable": target,
+            "analysis_type": analysis_type,
             "questions": questions,
             "notes": notes,
         }
-        return None
 
     def get_plan(self) -> Optional[dict]:
         return self.response

@@ -7,16 +7,67 @@ from ai_data_science_team.agents import (
     FeatureEngineeringAgent,
 )
 
-from ai_data_science_team.ds_agents import (
-    EDAToolsAgent,
+from ai_data_science_team.ds_agents import EDAToolsAgent
+from ai_data_science_team.ml_agents import H2OMLAgent, MLflowToolsAgent
+from ai_data_science_team.multiagents import SQLDataAnalyst, PandasDataAnalyst
+
+from ai_data_science_team.decision_science import (
+    ACADEMIC_MEDICINE,
+    CLINICAL_RESEARCH,
+    AnalysisContract,
+    AnalysisType,
+    ApprovalRegistry,
+    BenchmarkSuite,
+    DecisionScienceOrchestrator,
+    DecisionScienceRun,
+    EvidenceLedger,
+    EvidenceStrength,
+    InstitutionalKnowledgeStore,
+    ModelRouter,
+    ReproducibilityPackage,
+    ReviewStatus,
+    Scenario,
+    TraceRecorder,
+    assess_data_quality,
+    check_governance,
+    rank_scenarios,
+    recommend_methods,
+    red_team_analysis,
+    review_analysis,
 )
 
-from ai_data_science_team.ml_agents import (
-    H2OMLAgent,
-    MLflowToolsAgent,
-)
-
-from ai_data_science_team.multiagents import (
-    SQLDataAnalyst, 
-    PandasDataAnalyst, 
-)
+__all__ = [
+    "DataCleaningAgent",
+    "DataLoaderToolsAgent",
+    "DataVisualizationAgent",
+    "SQLDatabaseAgent",
+    "DataWranglingAgent",
+    "FeatureEngineeringAgent",
+    "EDAToolsAgent",
+    "H2OMLAgent",
+    "MLflowToolsAgent",
+    "SQLDataAnalyst",
+    "PandasDataAnalyst",
+    "ACADEMIC_MEDICINE",
+    "CLINICAL_RESEARCH",
+    "AnalysisContract",
+    "AnalysisType",
+    "ApprovalRegistry",
+    "BenchmarkSuite",
+    "DecisionScienceOrchestrator",
+    "DecisionScienceRun",
+    "EvidenceLedger",
+    "EvidenceStrength",
+    "InstitutionalKnowledgeStore",
+    "ModelRouter",
+    "ReproducibilityPackage",
+    "ReviewStatus",
+    "Scenario",
+    "TraceRecorder",
+    "assess_data_quality",
+    "check_governance",
+    "rank_scenarios",
+    "recommend_methods",
+    "red_team_analysis",
+    "review_analysis",
+]

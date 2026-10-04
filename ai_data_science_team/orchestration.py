@@ -1,17 +1,22 @@
-# BUSINESS SCIENCE UNIVERSITY
-# AI DATA SCIENCE TEAM
-# ***
-# Orchestration
-# ai_data_science_team/orchestration.py
+"""High-level orchestration interfaces.
 
-from ai_data_science_team.agents import data_cleaning_agent
+The original repository exposed this module as a TODO. The decision-science
+control plane now provides a stable orchestration surface while the existing
+LangGraph multi-agent workflows remain under ai_data_science_team.multiagents.
+"""
 
-# TODO - add orchestration
+from ai_data_science_team.decision_science import (
+    AnalysisContract,
+    AnalysisType,
+    DecisionScienceOrchestrator,
+    DecisionScienceRun,
+    ReproducibilityPackage,
+)
 
-# def model_pipeline(model, log=True, log_path=None):
-    
-#     return "todo"
-    
-    
-    
-    
+__all__ = [
+    "AnalysisContract",
+    "AnalysisType",
+    "DecisionScienceOrchestrator",
+    "DecisionScienceRun",
+    "ReproducibilityPackage",
+]
