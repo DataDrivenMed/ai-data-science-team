@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import pandas as pd
 
 from ...contracts import AnalysisContract, AnalysisType
-from .common import DomainMetric, proportion_metric, require_binary, require_columns, standard_contract
+from .common import (
+    DomainMetric,
+    proportion_metric,
+    require_binary,
+    require_columns,
+    standard_contract,
+)
 
 
 @dataclass(slots=True)
