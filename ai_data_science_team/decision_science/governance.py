@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
 import re
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 import pandas as pd
-
 
 DEFAULT_SENSITIVE_PATTERNS = {
     "direct_identifier": r"(^|_)(name|first_name|last_name|full_name|ssn|social_security|mrn|medical_record|email|phone|address|street)($|_)",
