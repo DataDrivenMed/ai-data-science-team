@@ -1,4 +1,5 @@
 openpyxl
+ipython
 langchain >= 1.0.0
 langchain_community
 langchain-ollama
