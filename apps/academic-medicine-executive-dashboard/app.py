@@ -297,6 +297,18 @@ with tabs[0]:
         institution_name=institution,
         as_of=datetime.now().date().isoformat(),
     )
+    live_action_summary = action_registry.summary()
+    if live_action_summary["TOTAL"]:
+        brief += (
+            "\n\n## Leadership action status\n"
+            f"- Open: {live_action_summary['OPEN']}\n"
+            f"- In progress: {live_action_summary['IN_PROGRESS']}\n"
+            f"- Blocked: {live_action_summary['BLOCKED']}\n"
+            f"- Complete pending verification: {live_action_summary['COMPLETE']}\n"
+            f"- Verified closed-loop actions: {live_action_summary['VERIFIED']}\n"
+            f"- Decisions logged: {live_action_summary['DECISIONS']}\n"
+            f"- Outcome reviews: {live_action_summary['REVIEWS']}"
+        )
     with st.container(border=True):
         st.markdown(brief)
     st.download_button(
